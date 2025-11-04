@@ -1,3 +1,4 @@
+"""Priority Inheritance with Backtracking (PIBT) algorithm for MAPF."""
 import numpy as np
 
 from .dist_table import DistTable
@@ -5,7 +6,51 @@ from .mapf_utils import Config, Configs, Coord, Grid, get_neighbors
 
 
 class PIBT:
-    def __init__(self, grid: Grid, starts: Config, goals: Config, seed: int = 0):
+    """Priority Inheritance with Backtracking algorithm for MAPF.
+
+    PIBT is an iterative algorithm that computes collision-free paths for
+    multiple agents in real-time. It uses priority inheritance and backtracking
+    to resolve conflicts efficiently.
+
+    The algorithm maintains distance tables for each agent to their goal and
+    uses these for informed decision making. Priorities are dynamically updated
+    based on progress toward goals.
+
+    Attributes:
+        grid: 2D boolean array where True indicates free space.
+        starts: Initial positions of all agents.
+        goals: Goal positions of all agents.
+        N: Number of agents.
+        dist_tables: Distance tables for each agent to their goal.
+        NIL: Sentinel value representing unassigned agent.
+        NIL_COORD: Sentinel value representing unassigned coordinate.
+        occupied_now: Current occupation status of each grid cell.
+        occupied_nxt: Next timestep occupation status of each grid cell.
+        rng: Random number generator for tie-breaking.
+
+    Example:
+        >>> grid = get_grid("map.map")
+        >>> starts, goals = get_scenario("scenario.scen", N=100)
+        >>> pibt = PIBT(grid, starts, goals, seed=42)
+        >>> solution = pibt.run(max_timestep=1000)
+        >>> print(f"Solution length: {len(solution)}")
+
+    References:
+        Okumura, K., Machida, M., Défago, X., & Tamura, Y. (2022).
+        Priority inheritance with backtracking for iterative multi-agent
+        path finding. Artificial Intelligence Journal.
+        https://kei18.github.io/pibt2/
+    """
+
+    def __init__(self, grid: Grid, starts: Config, goals: Config, seed: int = 0) -> None:
+        """Initialize PIBT solver.
+
+        Args:
+            grid: 2D boolean array where True indicates free space.
+            starts: Initial positions of all agents (y, x).
+            goals: Goal positions of all agents (y, x).
+            seed: Random seed for tie-breaking (default: 0).
+        """
         self.grid = grid
         self.starts = starts
         self.goals = goals
@@ -24,6 +69,21 @@ class PIBT:
         self.rng = np.random.default_rng(seed)
 
     def funcPIBT(self, Q_from: Config, Q_to: Config, i: int) -> bool:
+        """Core PIBT function for single agent planning with priority inheritance.
+
+        Attempts to assign a collision-free next position for agent i. If
+        another agent j occupies the desired position, recursively invokes
+        PIBT for agent j (priority inheritance). Backtracks if no valid
+        position is found.
+
+        Args:
+            Q_from: Current configuration (positions at current timestep).
+            Q_to: Next configuration being constructed (modified in-place).
+            i: Agent index to plan for.
+
+        Returns:
+            True if successfully assigned a position to agent i, False otherwise.
+        """
         # true -> valid, false -> invalid
 
         # get candidate next vertices
@@ -63,6 +123,18 @@ class PIBT:
         return False
 
     def step(self, Q_from: Config, priorities: list[float]) -> Config:
+        """Compute next configuration for all agents.
+
+        Executes one timestep of PIBT by calling funcPIBT for all agents
+        in priority order.
+
+        Args:
+            Q_from: Current configuration (positions at current timestep).
+            priorities: Priority values for each agent (higher = earlier planning).
+
+        Returns:
+            Next configuration with updated positions for all agents.
+        """
         # setup
         N = len(Q_from)
         Q_to: Config = []
@@ -84,6 +156,24 @@ class PIBT:
         return Q_to
 
     def run(self, max_timestep: int = 1000) -> Configs:
+        """Run PIBT algorithm until all agents reach goals or timeout.
+
+        Iteratively computes collision-free paths for all agents using PIBT.
+        Priorities are dynamically updated: incremented when an agent hasn't
+        reached its goal, decremented when it has.
+
+        Args:
+            max_timestep: Maximum number of timesteps to run (default: 1000).
+
+        Returns:
+            Sequence of configurations from start to goal. Each configuration
+            is a list of agent positions (y, x) at that timestep.
+
+        Example:
+            >>> pibt = PIBT(grid, starts, goals)
+            >>> solution = pibt.run(max_timestep=500)
+            >>> print(f"Solved in {len(solution)} timesteps")
+        """
         # define priorities
         priorities: list[float] = []
         for i in range(self.N):
