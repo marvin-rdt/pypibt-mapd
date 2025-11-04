@@ -172,7 +172,7 @@ class PIBT:
 
         Iteratively computes collision-free paths for all agents using PIBT.
         Priorities are dynamically updated: incremented when an agent hasn't
-        reached its goal, decremented when it has.
+        reached its goal, reset otherwise.
 
         Args:
             max_timestep: Maximum number of timesteps to run (default: 1000).
