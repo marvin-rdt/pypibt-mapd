@@ -9,12 +9,19 @@ class PIBT:
     """Priority Inheritance with Backtracking algorithm for MAPF.
 
     PIBT is an iterative algorithm that computes collision-free paths for
-    multiple agents in real-time. It uses priority inheritance and backtracking
-    to resolve conflicts efficiently.
+    multiple agents quickly, even with hundreds of agents or more. It uses
+    priority inheritance and backtracking to resolve conflicts efficiently.
 
-    The algorithm maintains distance tables for each agent to their goal and
-    uses these for informed decision making. Priorities are dynamically updated
-    based on progress toward goals.
+    The algorithm is sub-optimal but provides acceptable solutions almost
+    immediately. It maintains distance tables for each agent to their goal
+    and uses these for informed decision making. Priorities are dynamically
+    updated based on progress toward goals.
+
+    Completeness Guarantee:
+        All agents are guaranteed to reach their destinations within finite
+        time when the graph is biconnected (i.e., all pairs of adjacent nodes
+        belong to a simple cycle). This property holds regardless of the
+        number of agents.
 
     Attributes:
         grid: 2D boolean array where True indicates free space.
@@ -40,6 +47,11 @@ class PIBT:
         Priority inheritance with backtracking for iterative multi-agent
         path finding. Artificial Intelligence Journal.
         https://kei18.github.io/pibt2/
+
+    Note:
+        PIBT serves as a core component in LaCAM* (IJCAI-23), which uses
+        PIBT to quickly obtain initial solutions for eventually optimal
+        multi-agent pathfinding. See https://kei18.github.io/lacam2/
     """
 
     def __init__(self, grid: Grid, starts: Config, goals: Config, seed: int = 0) -> None:

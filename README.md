@@ -12,9 +12,17 @@ If you are just interested in moving hundreds of agents or more in a short perio
 
 To be honest, as the developer of PIBT, I only developed it to keep multiple agents running smoothly, not to solve MAPF or MAPD.
 But it turned out to be much more powerful than I expected.
-A successful example is [LaCAM*](https://kei18.github.io/lacam2/).
+
+**Key Characteristics:**
+- **Complete**: Guarantees all agents reach their goals in finite time on biconnected graphs
+- **Scalable**: Handles hundreds of agents with immediate response time
+- **Sub-optimal**: Provides fast, acceptable solutions rather than optimal ones
+
+A successful example is [LaCAM*](https://kei18.github.io/lacam2/) (IJCAI-23).
 It achieves remarkable performance, to say the least.
-I also noticed that PIBT has been extended and used by other researchers.
+LaCAM* uses PIBT to obtain initial solutions quickly and then refines them to eventually optimal solutions, demonstrating PIBT's effectiveness as a building block for more sophisticated algorithms.
+
+I also noticed that PIBT has been extended and used by other researchers, and was even used as a core component in the winning strategy of the MAPF competition (2023).
 These experiences were enough to motivate me to create a minimal implementation example to help other studies, including my future research projects.
 
 As you know, many researchers like Python because it is friendly and has a nice ecosystem.
