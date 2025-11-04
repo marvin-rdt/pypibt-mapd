@@ -18,10 +18,10 @@ class PIBT:
     updated based on progress toward goals.
 
     Completeness Guarantee:
-        All agents are guaranteed to reach their destinations within finite
-        time when the graph is biconnected (i.e., all pairs of adjacent nodes
-        belong to a simple cycle). This property holds regardless of the
-        number of agents.
+        All agents are guaranteed to reach their destinations within a finite
+        time when all pairs of adjacent vertices belong to a simple cycle 
+        (i.e., biconnected). This property holds regardless of the number 
+        of agents.
 
     Attributes:
         grid: 2D boolean array where True indicates free space.
@@ -49,9 +49,9 @@ class PIBT:
         https://kei18.github.io/pibt2/
 
     Note:
-        PIBT serves as a core component in LaCAM* (IJCAI-23), which uses
+        PIBT serves as a core component in LaCAM (AAAI-23), which uses
         PIBT to quickly obtain initial solutions for eventually optimal
-        multi-agent pathfinding. See https://kei18.github.io/lacam2/
+        multi-agent pathfinding. See https://kei18.github.io/lacam-project/
     """
 
     def __init__(self, grid: Grid, starts: Config, goals: Config, seed: int = 0) -> None:
