@@ -7,12 +7,28 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["MAPF", "multi-agent", "path-finding", "PIBT", "robotics", "planning"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "numpy>=1.25.1",
     "jupyterlab>=3.0.0,<4.0.0a0",
     "matplotlib>=3.7.2",
     "pytest>=7.4.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Kei18/pypibt"
+Repository = "https://github.com/Kei18/pypibt"
+"Bug Tracker" = "https://github.com/Kei18/pypibt/issues"
 
 [dependency-groups]
 dev = [
