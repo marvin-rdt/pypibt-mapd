@@ -1,7 +1,53 @@
-Copyright 2023 Keisuke Okumura
+MIT License
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+This work is based on two repositories by Keisuke Okumura:
+- pibt2 (C++ MAPF and MAPD implementation) - Copyright (c) 2021 Keisuke Okumura
+- pypibt (Python MAPF implementation) - Copyright (c) 2023 Keisuke Okumura
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+Modified work Copyright (c) 2025 Marvin Rüdt
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+
+ATTRIBUTION
+
+This software combines code from two separate repositories by Keisuke Okumura:
+
+1. pypibt - Python implementation of PIBT for MAPF (2023)
+   Copyright (c) 2023 Keisuke Okumura
+   https://github.com/Kei18/pypibt
+   Used: MAPF solver code (pibt.py, mapf_utils.py, dist_table.py) - UNCHANGED
+   
+2. pibt2 - C++ implementation of PIBT for MAPF and MAPD (2021)
+   Copyright (c) 2021 Keisuke Okumura
+   https://github.com/Kei18/pibt2
+   Used: MAPD algorithm translated from C++ to Python (mapd.py, mapd_utils.py)
+
+3. PIBT Algorithm Research Paper:
+   Okumura, K., Machida, M., Défago, X., & Tamura, Y. (2022).
+   "Priority Inheritance with Backtracking for Iterative Multi-agent Path Finding"
+   Artificial Intelligence Journal.
+   https://kei18.github.io/pibt2/
+
+CONTRIBUTIONS BY THIS REPOSITORY (2025):
+- Python translation of MAPD from C++ (pibt2) to Python
+- Unified CLI interface for both MAPF and MAPD modes
+- Extended documentation, examples, and Jupyter notebooks
+- Maintainer: Marvin Rüdt

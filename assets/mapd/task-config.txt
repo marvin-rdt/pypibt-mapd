@@ -1,0 +1,16 @@
+## MAPD Task Configuration
+## Map file, number of agents, seed, and max_timestep are specified via command line arguments
+## This file defines task generation parameters with their default values
+
+## Task frequency
+## If < 1: probability per timestep (e.g., 0.5 = 50% chance)
+## If >= 1: number of tasks per timestep (e.g., 2.0 = 2 tasks per timestep)
+task_frequency=20
+
+## Total number of tasks to generate
+task_num=500
+
+## Specify pickup and delivery locations using .pd file
+## If 1: looks for {map_file}.pd file with special location markers
+## If 0: uses all free cells as pickup/delivery locations
+specify_pickup_deliv_locs=0

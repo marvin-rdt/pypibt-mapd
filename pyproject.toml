@@ -1,14 +1,15 @@
 [project]
-name = "pypibt"
+name = "pypibt-mapd"
 version = "0.1.0"
-description = "A minimal python implementation of Priority Inheritance with Backtracking (PIBT) for Multi-Agent Path Finding (MAPF)"
+description = "Python implementation of Priority Inheritance with Backtracking for MAPF and MAPD - Extended version of pypibt with Multi-Agent Pickup and Delivery support"
 authors = [
-    { name = "Kei18", email = "keisuke.oku18@gmail.com" }
+    { name = "Marvin Rüdt", email = "marvin.ruedt@gmx.de" },
+    { name = "Keisuke Okumura", email = "keisuke.oku18@gmail.com" }
 ]
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-keywords = ["MAPF", "multi-agent", "path-finding", "PIBT", "robotics", "planning"]
+keywords = ["MAPF", "MAPD", "multi-agent", "path-finding", "pickup-delivery", "PIBT", "robotics", "planning"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
@@ -26,9 +27,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Kei18/pypibt"
-Repository = "https://github.com/Kei18/pypibt"
-"Bug Tracker" = "https://github.com/Kei18/pypibt/issues"
+Homepage = "https://github.com/marvin-rdt/pypibt-mapd"
+Repository = "https://github.com/marvin-rdt/pypibt-mapd"
+"Bug Tracker" = "https://github.com/marvin-rdt/pypibt-mapd/issues"
+"Original Project" = "https://github.com/Kei18/pypibt"
 
 [dependency-groups]
 dev = [

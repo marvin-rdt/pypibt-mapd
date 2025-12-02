@@ -1,68 +1,125 @@
-# pypibt
+# pypibt-mapd
 
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](./LICENCE.txt)
-[![CI](https://github.com/Kei18/pypibt/actions/workflows/ci.yml/badge.svg)](https://github.com/Kei18/pypibt/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
-A minimal python implementation of Priority Inheritance with Backtracking (PIBT) for Multi-Agent Path Finding (MAPF).
-If you are just interested in moving hundreds of agents or more in a short period of time, PIBT may work as a powerful tool.
+A Python implementation of Priority Inheritance with Backtracking (PIBT) for Multi-Agent Path Finding (MAPF) and Multi-Agent Pickup and Delivery (MAPD). This is an **extended version** of [pypibt](https://github.com/Kei18/pypibt).
 
-- Okumura, K., Machida, M., Défago, X., & Tamura, Y. Priority inheritance with backtracking for iterative multi-agent path finding. AIJ. 2022. [[project-page]](https://kei18.github.io/pibt2/)
+This repository combines:
+- **MAPF implementation**: Unchanged from [pypibt](https://github.com/Kei18/pypibt) by Keisuke Okumura
+- **MAPD implementation**: Translated from the C++ version in [pibt2](https://github.com/Kei18/pibt2) by Keisuke Okumura
 
-## background
+Both implementations are based on:
+- Okumura, K., Machida, M., Défago, X., & Tamura, Y. (2022). Priority inheritance with backtracking for iterative multi-agent path finding. AIJ. [[paper]](https://kei18.github.io/pibt2/)
 
-To be honest, as the developer of PIBT, I only developed it to keep multiple agents running smoothly, not to solve MAPF or MAPD.
-But it turned out to be much more powerful than I expected.
-A successful example is [LaCAM*](https://kei18.github.io/lacam2/).
-It achieves remarkable performance, to say the least.
-I also noticed that PIBT has been extended and used by other researchers.
-These experiences were enough to motivate me to create a minimal implementation example to help other studies, including my future research projects.
+## Background
 
-As you know, many researchers like Python because it is friendly and has a nice ecosystem.
-In contrast, most MAPF algorithms, such as the original PIBT, are coded in C++ for performance reasons.
-So here is the Python implementation.
-I hope the repo is helpful to understand the algorithm; the main part is only a hundred and a few lines.
-You can also use and extend this repo, for example, applying to new problems, enhancing with machine learning, etc.
+PIBT is a powerful algorithm for moving hundreds of agents smoothly in real-time. It was originally developed not just to solve MAPF, but to keep multiple agents running efficiently in dynamic environments.
 
-## setup
+**MAPF (Multi-Agent Path Finding)**: Find collision-free paths for agents from fixed start positions to fixed goal positions. Use this when you need one-shot path planning.
+
+**MAPD (Multi-Agent Pickup and Delivery)**: Coordinate agents to continuously pick up and deliver items. Tasks appear dynamically, and agents complete them in sequence. Use this for warehouse automation, logistics, and continuous operations.
+
+This Python implementation makes PIBT accessible for:
+- Quick prototyping and experimentation
+- Integration with Python ML frameworks
+- Educational purposes and algorithm understanding
+- Extension to new problem domains
+
+## Demo
+
+**MAPF with 100 agents**
+
+<img src="assets/demo_mapf.gif" width="600" alt="MAPF Demo">
+
+**MAPD with 100 agents**
+
+<img src="assets/demo_mapd.gif" width="600" alt="MAPD Demo">
+
+## Setup
 
 This repository is easily setup with [uv](https://docs.astral.sh/uv/).
-After cloning this repo, run the following to complete the setup.
 
 ```sh
+git clone https://github.com/marvin-rdt/pypibt-mapd.git
+cd pypibt-mapd
 uv sync
 ```
 
-## demo
+## Usage
+
+### MAPF (Multi-Agent Path Finding)
 
 ```sh
-uv run python app.py -m assets/random-32-32-10.map -i assets/random-32-32-10-random-1.scen -N 200
+# Run MAPF solver
+uv run python app.py --mode mapf -m assets/maps/random-32-32-10.map -i assets/mapf/random-32-32-10-random-1.scen -N 100 -o assets/mapf/output_mapf.txt
 ```
 
-The result will be saved in `output.txt`
-The grid maps and scenarios in `assets/` are from [MAPF benchmarks](https://movingai.com/benchmarks/mapf/index.html).
-
-### visualization
-
-You can visualize the planning result with [@kei18/mapf-visualizer](https://github.com/kei18/mapf-visualizer).
+### MAPD (Multi-Agent Pickup and Delivery)
 
 ```sh
-mapf-visualizer ./assets/random-32-32-10.map ./output.txt
+# Run MAPD solver
+uv run python app.py --mode mapd -m assets/maps/random-32-32-10.map -i assets/mapd/task-config.txt -N 100 -o assets/mapd/output_mapd.txt
 ```
 
-![](./assets/demo.gif)
+The results will be saved in the output files. The grid maps and scenarios are from [MAPF benchmarks](https://movingai.com/benchmarks/mapf/index.html).
 
-### jupyter lab
+### Visualization
 
-Jupyter Lab is also available.
-Use the following command:
+Visualize MAPF and MAPD solutions with the built-in Python visualizer:
+
+```sh
+# Visualization of MAPF solution
+uv run python scripts/visualize_mapd.py assets/mapf/output_mapf.txt -m assets/maps/random-32-32-10.map --mode mapf
+
+# Visualization of MAPD solution
+uv run python scripts/visualize_mapd.py assets/mapd/output_mapd.txt -m assets/maps/random-32-32-10.map --mode mapd
+
+# Save animation as GIF or MP4 with speed control
+uv run python scripts/visualize_mapd.py assets/mapd/output_mapd.txt -m assets/maps/random-32-32-10.map --mode mapd --save assets/mapd/output_mapd.gif --speed 5.0
+
+# Fast playback without interpolation
+uv run python scripts/visualize_mapd.py assets/mapd/output_mapd.txt -m assets/maps/random-32-32-10.map --mode mapd --no-interpolation
+```
+
+**Features:**
+- **Agent status**: Agents show loaded (filled) and unloaded (hollow) states
+- **Goal lines**: Next goal locations of agents are dynamically visualized
+- **Task tracking**: Timestep and completed tasks are tracked (e.g., "Timestep: 50/100 | Tasks: 25/500")
+- **Speed control**: `--speed` parameter controls saved animation speed (timesteps/second)
+- **Smooth motion**: 5-frame interpolation by default, disable with `--no-interpolation` for faster playback
+
+The MAPF output file is also compatible with the [mapf-visualizer](https://github.com/kei18/mapf-visualizer).
+
+### Jupyter Notebooks
+
+Interactive tutorials with visualization:
 
 ```sh
 uv run jupyter lab
 ```
 
-You can see an example in `notebooks/demo.ipynb`.
+Open these notebooks for step-by-step examples:
+- `notebooks/mapf_demo.ipynb` - Two MAPF examples (random and warehouse maps) with animated GIFs
+- `notebooks/mapd_demo.ipynb` - Two MAPD examples (random and warehouse maps) with animated GIFs
 
+Both notebooks include complete workflow from problem setup to animated visualization displayed as GIF images (no ffmpeg required).
 
-## Licence
+## License
 
 This software is released under the MIT License, see [LICENSE.txt](LICENCE.txt).
+
+## Citation
+
+If you use this code in academic work, please cite the original paper:
+
+```bibtex
+@article{okumura2022priority,
+  title={Priority Inheritance with Backtracking for Iterative Multi-agent Path Finding},
+  author={Okumura, Keisuke and Machida, Manao and D{\'e}fago, Xavier and Tamura, Yasumasa},
+  journal={Artificial Intelligence},
+  pages={103752},
+  year={2022},
+  publisher={Elsevier}
+}
+```

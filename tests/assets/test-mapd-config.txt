@@ -1,0 +1,3 @@
+task_frequency=1.0
+task_num=5
+specify_pickup_deliv_locs=0
