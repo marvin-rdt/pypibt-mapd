@@ -17,6 +17,49 @@ import random
 from .mapf_utils import Coord, Grid, Config, Configs, get_neighbors
 
 
+def is_dead_end(grid: Grid, coord: Coord, min_neighbors: int = 2) -> bool:
+    """Check if a coordinate is in a dead end (has fewer than min_neighbors).
+    
+    A dead end is a position with only one free neighbor, making it prone to
+    deadlocks in PIBT. Positions should have at least 2 neighbors for agents
+    to navigate around each other.
+    
+    Args:
+        grid: 2D boolean array representing the map.
+        coord: Position to check (y, x).
+        min_neighbors: Minimum number of neighbors required (default: 2).
+    
+    Returns:
+        True if position has fewer than min_neighbors free neighbors.
+    """
+    neighbors = get_neighbors(grid, coord)
+    return len(neighbors) < min_neighbors
+
+
+def get_valid_positions(grid: Grid, min_neighbors: int = 2) -> list[Coord]:
+    """Get all valid positions that are not dead ends.
+    
+    Returns positions that have at least min_neighbors free neighbors,
+    suitable for agent starts, task pickups, and deliveries.
+    
+    Args:
+        grid: 2D boolean array representing the map.
+        min_neighbors: Minimum number of neighbors required (default: 2).
+    
+    Returns:
+        List of valid positions as (y, x) coordinates.
+    """
+    valid_positions = []
+    height, width = grid.shape
+    
+    for y in range(height):
+        for x in range(width):
+            if grid[y, x] and not is_dead_end(grid, (y, x), min_neighbors):
+                valid_positions.append((y, x))
+    
+    return valid_positions
+
+
 @dataclass
 class Task:
     """Pickup and delivery task for MAPD.
@@ -128,6 +171,10 @@ class MAPDInstance:
         # Task generation state
         self._next_task_id = 0
         self._tasks_generated = 0
+        
+        # Pre-generate all tasks upfront to ensure consistency across different runs
+        # This guarantees that with the same seed, the first N tasks are always identical
+        self._all_tasks_pregenerated = self._pregenerate_all_tasks()
     
     def _filter_dead_ends(self, locations: list[Coord]) -> list[Coord]:
         """Filter out dead end positions from location list.
@@ -138,7 +185,6 @@ class MAPDInstance:
         Returns:
             List of coordinates that are not dead ends (have >= 2 neighbors).
         """
-        from .mapf_utils import is_dead_end
         filtered = [loc for loc in locations if not is_dead_end(self.grid, loc)]
         
         if len(filtered) < len(locations):
@@ -153,7 +199,6 @@ class MAPDInstance:
         Returns:
             List of coordinates with at least 2 free neighbors.
         """
-        from .mapf_utils import get_valid_positions
         return get_valid_positions(self.grid, min_neighbors=2)
     
     def _get_all_free_cells(self) -> list[Coord]:
@@ -173,48 +218,69 @@ class MAPDInstance:
         self.current_timestep += 1
         self._generate_tasks_for_timestep()
     
-    def _generate_tasks_for_timestep(self) -> None:
-        """Generate new tasks for current timestep.
+    def _pregenerate_all_tasks(self) -> list[tuple[int, Coord, Coord]]:
+        """Pre-generate all tasks upfront to ensure consistency.
         
-        Generation strategy:
-        - If task_frequency >= 1: Generate that many tasks per timestep
-        - If task_frequency < 1: Probabilistic generation
+        This ensures that with the same seed, the first N tasks are always identical
+        regardless of how many total tasks are requested.
+        
+        Returns:
+            List of (timestep_appear, pickup_loc, delivery_loc) tuples.
+        """
+        pregenerated_tasks = []
+        timestep = 0
+        tasks_generated = 0
+        rng = random.Random(self.seed)  # Use fresh RNG for task generation
+        
+        while tasks_generated < self.task_num:
+            timestep += 1
+            
+            # Determine how many tasks to generate this timestep
+            if self.task_frequency >= 1.0:
+                num_to_gen = int(self.task_frequency)
+            else:
+                num_to_gen = 1 if rng.random() < self.task_frequency else 0
+            
+            for _ in range(num_to_gen):
+                if tasks_generated >= self.task_num:
+                    break
+                
+                # Random pickup and delivery
+                pickup = rng.choice(self.locs_pickup)
+                delivery = rng.choice(self.locs_delivery)
+                
+                # Ensure pickup != delivery
+                while pickup == delivery and len(self.locs_delivery) > 1:
+                    delivery = rng.choice(self.locs_delivery)
+                
+                pregenerated_tasks.append((timestep, pickup, delivery))
+                tasks_generated += 1
+        
+        return pregenerated_tasks
+    
+    def _generate_tasks_for_timestep(self) -> None:
+        """Generate new tasks for current timestep from pre-generated list.
+        
+        Uses pre-generated tasks to ensure consistency across different runs.
         """
         if self._tasks_generated >= self.task_num:
             return  # Already generated all tasks
         
-        # Determine how many tasks to generate
-        if self.task_frequency >= 1.0:
-            # Deterministic: Generate fixed number per timestep
-            num_to_gen = int(self.task_frequency)
-        else:
-            # Probabilistic: Generate with probability
-            num_to_gen = 1 if self.rng.random() < self.task_frequency else 0
-        
-        # Generate tasks
-        for _ in range(num_to_gen):
-            if self._tasks_generated >= self.task_num:
-                break
+        # Release tasks scheduled for this timestep from pre-generated list
+        while (self._tasks_generated < len(self._all_tasks_pregenerated) and
+               self._all_tasks_pregenerated[self._tasks_generated][0] == self.current_timestep):
             
-            # Random pickup and delivery
-            pickup = self.rng.choice(self.locs_pickup)
-            delivery = self.rng.choice(self.locs_delivery)
-            
-            # Ensure pickup != delivery
-            while pickup == delivery and len(self.locs_delivery) > 1:
-                delivery = self.rng.choice(self.locs_delivery)
+            timestep_appear, pickup, delivery = self._all_tasks_pregenerated[self._tasks_generated]
             
             task = Task(
                 id=self._next_task_id,
                 loc_pickup=pickup,
                 loc_delivery=delivery,
                 loc_current=pickup,
-                timestep_appear=self.current_timestep,
+                timestep_appear=timestep_appear,
                 timestep_finished=None,
                 assigned=False
             )
-            
-            # print(f"[t={self.current_timestep}] Task {task.id} generated: pickup=({pickup[1]},{pickup[0]}) -> delivery=({delivery[1]},{delivery[0]})")
             
             self.tasks_unassigned.append(task)
             self._next_task_id += 1
@@ -356,7 +422,7 @@ def get_mapd_instance(instance_file: str, map_file: str | None = None,
     Raises:
         ValueError: If insufficient valid (non-dead-end) positions for agents/tasks.
     """
-    from .mapf_utils import get_grid, get_valid_positions, is_dead_end
+    from .mapf_utils import get_grid
     import random
     
     # Parse instance file
@@ -387,8 +453,12 @@ def get_mapd_instance(instance_file: str, map_file: str | None = None,
         )
     
     # Generate random start positions from valid positions only
+    # Shuffle all valid positions once with the seed, then take first N
+    # This ensures the first N agents always have the same positions regardless of total agent count
     rng = random.Random(seed)
-    starts = rng.sample(valid_positions, final_num_agents)
+    shuffled_positions = valid_positions.copy()
+    rng.shuffle(shuffled_positions)
+    starts = shuffled_positions[:final_num_agents]
     
     # Validate starts
     for i, start in enumerate(starts):
@@ -402,7 +472,6 @@ def get_mapd_instance(instance_file: str, map_file: str | None = None,
         pickup_locs, delivery_locs = parse_pd_file(grid, pd_file)
         
         # Filter out dead ends from pickup/delivery locations
-        from .mapf_utils import is_dead_end
         pickup_locs_filtered = [loc for loc in pickup_locs if not is_dead_end(grid, loc)]
         delivery_locs_filtered = [loc for loc in delivery_locs if not is_dead_end(grid, loc)]
         
@@ -428,7 +497,7 @@ def get_mapd_instance(instance_file: str, map_file: str | None = None,
 
 
 def is_valid_mapd_solution(grid: Grid, starts: list[Coord], solution: Configs,
-                            completed_tasks: list[tuple[int, Task]]) -> bool:
+                            completed_tasks: list[tuple[int, Task]], verbose: bool = True) -> bool:
     """Validate MAPD solution.
     
     Checks:
@@ -442,15 +511,20 @@ def is_valid_mapd_solution(grid: Grid, starts: list[Coord], solution: Configs,
         starts: Initial agent positions.
         solution: Sequence of configurations.
         completed_tasks: List of (agent_id, task) pairs.
+        verbose: If True, print detailed error messages.
     
     Returns:
         True if solution is valid, False otherwise.
     """
     if not solution:
+        if verbose:
+            print("Validation Error: Empty solution")
         return False
     
     # Check initial configuration
     if solution[0] != starts:
+        if verbose:
+            print("Validation Error: Initial configuration doesn't match starts")
         return False
     
     # Check all timesteps for collisions and valid moves
@@ -469,6 +543,8 @@ def is_valid_mapd_solution(grid: Grid, starts: list[Coord], solution: Configs,
                 # Check continuity (agent can only move to neighbors or stay)
                 valid_moves = [v_i_pre] + get_neighbors(grid, v_i_pre)
                 if v_i_now not in valid_moves:
+                    if verbose:
+                        print(f"Validation Error: Agent {i} at timestep {t} made invalid move from {v_i_pre} to {v_i_now}")
                     return False
             
             # Check vertex collisions with other agents
@@ -477,6 +553,8 @@ def is_valid_mapd_solution(grid: Grid, starts: list[Coord], solution: Configs,
                 
                 # Vertex collision: two agents at same position
                 if v_i_now == v_j_now:
+                    if verbose:
+                        print(f"Validation Error: Vertex collision at timestep {t} - Agents {i} and {j} both at {v_i_now}")
                     return False
                 
                 # Edge collision (swap): check if agents swapped positions
@@ -486,6 +564,9 @@ def is_valid_mapd_solution(grid: Grid, starts: list[Coord], solution: Configs,
                     # Agent j moved from v_j_pre to v_j_now  
                     # Collision if i moved to j's old position AND j moved to i's old position
                     if v_i_now == v_j_pre and v_j_now == v_i_pre:
+                        if verbose:
+                            print(f"Validation Error: Edge collision at timestep {t} - "
+                                  f"Agent {i}: {v_i_pre} -> {v_i_now}, Agent {j}: {v_j_pre} -> {v_j_now}")
                         return False
     
     # Check each completed task: agent must visit pickup before delivery
@@ -504,6 +585,9 @@ def is_valid_mapd_solution(grid: Grid, starts: list[Coord], solution: Configs,
         
         # Verify pickup happened before delivery
         if t_pickup is None or t_delivery is None or t_pickup >= t_delivery:
+            if verbose:
+                print(f"Validation Error: Task {task.id} - Agent {agent_id} did not complete task correctly "
+                      f"(pickup at t={t_pickup}, delivery at t={t_delivery})")
             return False
     
     return True

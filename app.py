@@ -53,7 +53,7 @@ if __name__ == "__main__":
         default="output.txt",
         help="Output file path"
     )
-    parser.add_argument("-s", "--seed", type=int, default=0, help="Random seed")
+    parser.add_argument("-s", "--seed", type=int, default=1, help="Random seed")
     parser.add_argument("--max-timestep", type=int, default=1000, help="Maximum timesteps (default: 1000)")
     parser.add_argument("--max-comp-time", type=int, default=60000, help="Maximum computation time in milliseconds (default: 60000)")
     
@@ -117,11 +117,16 @@ if __name__ == "__main__":
         comp_time = time.perf_counter() - start_time
         
         # Validation
+        print("\n=== Validating Solution ===")
         valid = is_valid_mapd_solution(
-            mapd.grid, mapd.starts, solution, mapd.completed_tasks
+            mapd.grid, mapd.starts, solution, mapd.completed_tasks, verbose=True
         )
         
         # Results
+        if valid:
+            print("[OK] Solution is VALID - No collisions detected")
+        else:
+            print("[FAIL] Solution is INVALID - Collisions or errors detected!")
         print(f"Solved: {valid}")
         print(f"Completed tasks: {len(mapd.completed_tasks)}/{mapd.instance.task_num}")
         print(f"Timesteps: {len(solution) - 1}")

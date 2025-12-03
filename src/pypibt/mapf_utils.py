@@ -147,49 +147,6 @@ def get_neighbors(grid: Grid, coord: Coord) -> list[Coord]:
     return neigh
 
 
-def is_dead_end(grid: Grid, coord: Coord, min_neighbors: int = 2) -> bool:
-    """Check if a coordinate is in a dead end (has fewer than min_neighbors).
-    
-    A dead end is a position with only one free neighbor, making it prone to
-    deadlocks in PIBT. Positions should have at least 2 neighbors for agents
-    to navigate around each other.
-    
-    Args:
-        grid: 2D boolean array representing the map.
-        coord: Position to check (y, x).
-        min_neighbors: Minimum number of neighbors required (default: 2).
-    
-    Returns:
-        True if position has fewer than min_neighbors free neighbors.
-    """
-    neighbors = get_neighbors(grid, coord)
-    return len(neighbors) < min_neighbors
-
-
-def get_valid_positions(grid: Grid, min_neighbors: int = 2) -> list[Coord]:
-    """Get all valid positions that are not dead ends.
-    
-    Returns positions that have at least min_neighbors free neighbors,
-    suitable for agent starts, task pickups, and deliveries.
-    
-    Args:
-        grid: 2D boolean array representing the map.
-        min_neighbors: Minimum number of neighbors required (default: 2).
-    
-    Returns:
-        List of valid positions as (y, x) coordinates.
-    """
-    valid_positions = []
-    height, width = grid.shape
-    
-    for y in range(height):
-        for x in range(width):
-            if grid[y, x] and not is_dead_end(grid, (y, x), min_neighbors):
-                valid_positions.append((y, x))
-    
-    return valid_positions
-
-
 def save_configs_for_visualizer(configs: Configs, filename: str) -> None:
     """Save solution configurations for visualization.
 

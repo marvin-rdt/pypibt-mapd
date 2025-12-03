@@ -8,7 +8,7 @@
 task_frequency=20
 
 ## Total number of tasks to generate
-task_num=500
+task_num=200
 
 ## Specify pickup and delivery locations using .pd file
 ## If 1: looks for {map_file}.pd file with special location markers

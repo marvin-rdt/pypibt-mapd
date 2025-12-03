@@ -214,6 +214,13 @@ class MAPD:
         
         # Main simulation loop
         while self.instance.current_timestep < max_timestep:
+            # Debug logging for specific timestep
+            #  Timestep N means we're AT timestep N, about to plan moves that will execute and put us AT timestep N+1
+            # So if collision happens at timestep 18, we want to debug timestep 17 (the planning that leads to 18)
+            # But solution is 0-indexed, so solution[18] is the 19th configuration (after 18 moves)
+            # So when current_timestep=17, we're planning move #18 which creates solution[18]
+            # Debug removed
+            
             # Check computation time limit
             elapsed_time = time.perf_counter() - start_time
             if elapsed_time >= max_comp_time_sec:
@@ -414,6 +421,10 @@ class MAPD:
         Args:
             agents: List of all agents (modified in-place with v_next positions).
         """
+        # Clear occupied_next table to start fresh (remove garbage from failed planning attempts)
+        # This is NOT in the C++ original, but necessary to prevent garbage accumulation
+        self.occupied_next.fill(self.NIL)
+        
         # Create agent lookup using list for O(1) access by ID
         # Assumes agent IDs are sequential starting from 0
         agent_list = [None] * len(agents)
@@ -441,13 +452,17 @@ class MAPD:
         Returns:
             Configuration (list of positions) sorted by agent ID for output.
         """
+        # CRITICAL: Must clear occupied_now in first pass, THEN set new positions in second pass
+        # Otherwise if agent A moves X->Y and agent B moves Y->Z, processing B will clear A's new position
+        
+        # First pass: Clear old positions and occupied_next
         for agent in agents:
-            # Clear reservation tables (no conditional needed - we know agent owns these cells)
             self.occupied_now[agent.v_now] = self.NIL
             if agent.v_next is not None:
                 self.occupied_next[agent.v_next] = self.NIL
-            
-            # Execute move
+        
+        # Second pass: Execute moves and set new positions
+        for agent in agents:
             agent.v_now = agent.v_next
             self.occupied_now[agent.v_now] = agent.id
             
@@ -564,20 +579,14 @@ class MAPD:
             if self.occupied_next[u] != self.NIL:
                 continue
             
-            # Check who is currently at position u
-            ak_id = self.occupied_now[u]
-            
-            # Avoid edge collision with calling agent
-            # The calling agent called us to move, so we can't move to where it currently is
+            # Edge collision prevention with calling agent
+            # If a calling agent invoked us via priority inheritance, we cannot move to its current position
+            # This is the ONLY check needed to prevent swaps - the C++ original has only this check
             if calling_agent is not None and u == calling_agent.v_now:
                 continue
             
-            # Avoid edge collision: if agent at u has already planned to move to our position
-            if ak_id != self.NIL and ak_id != agent.id:
-                ak = agent_list[ak_id]  # O(1) list access instead of dict lookup
-                # If ak has already been planned and is moving to where we are now, that's a swap
-                if ak.v_next is not None and ak.v_next == agent.v_now:
-                    continue
+            # Check who is currently at position u
+            ak_id = self.occupied_now[u]
             
             # Reserve next location
             self.occupied_next[u] = agent.id
@@ -588,11 +597,13 @@ class MAPD:
                 ak = agent_list[ak_id]  # O(1) list access
                 # If agent at u hasn't planned yet, invoke PIBT for it
                 if ak.v_next is None:
-                    # Recursively plan for blocking agent, passing ourselves as calling_agent
+                    # Priority inheritance: recursively plan for blocking agent
+                    # CRITICAL: Do NOT unreserve on failure! The failed reservation must stay
+                    # to prevent other agents from attempting the same move. This is essential
+                    # for swap collision prevention - see C++ implementation line 232.
                     if not self._func_pibt(ak, agent_list, agent):
-                        # Failed to replan blocking agent, unreserve and try next candidate
-                        self.occupied_next[u] = self.NIL
-                        agent.v_next = None
+                        # Failed to replan blocking agent, try next candidate
+                        # Note: We keep occupied_next[u] = agent.id as a "failed attempt marker"
                         continue
             
             # Successfully assigned position
